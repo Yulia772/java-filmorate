@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -18,12 +17,10 @@ import java.util.List;
 public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-    private final UserStorage users;
     private final UserService userService;
 
     @Autowired
-    public UserController(UserStorage users, UserService userService) {
-        this.users = users;
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
@@ -33,7 +30,7 @@ public class UserController {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return users.create(user);
+        return userService.create(user);
     }
 
     @PutMapping
@@ -42,12 +39,12 @@ public class UserController {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return users.update(user);
+        return userService.update(user);
     }
 
     @GetMapping
     public Collection<User> getAll() {
-        return users.findAll();
+        return userService.getAll();
     }
 
     @GetMapping("/{id}")

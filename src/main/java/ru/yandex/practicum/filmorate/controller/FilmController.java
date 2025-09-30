@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -20,31 +19,28 @@ public class FilmController {
 
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
-    private final FilmStorage films;
     private final FilmService filmService;
 
     @Autowired
-    public FilmController(FilmStorage films, FilmService filmService) {
-        this.films = films;
+    public FilmController(FilmService filmService) {
         this.filmService = filmService;
-
     }
 
     @PostMapping
     public Film addFilm(@RequestBody Film film) {
         validate(film);
-        return films.create(film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film updateFilm(@RequestBody Film film) {
         validate(film);
-        return films.update(film);
+        return filmService.update(film);
     }
 
     @GetMapping
     public Collection<Film> getAll() {
-        return films.findAll();
+        return filmService.getAll();
     }
 
     @GetMapping("/{id}")

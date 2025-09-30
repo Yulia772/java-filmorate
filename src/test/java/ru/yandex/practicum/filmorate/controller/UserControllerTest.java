@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -14,9 +15,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserControllerTest {
 
-    private final UserStorage userStorage = new InMemoryUserStorage();
-    private final UserService userService = new UserService(userStorage);
-    private final UserController controller = new UserController(userStorage, userService);
+    private UserStorage userStorage;
+    private UserService userService;
+    private UserController controller;
+
+    @BeforeEach
+    void setup() {
+        userStorage = new InMemoryUserStorage();
+        userService = new UserService(userStorage);
+        controller = new UserController(userService);
+    }
 
     @Test
     void shouldRejectBadEmail() {

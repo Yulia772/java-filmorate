@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
@@ -15,10 +16,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FilmServiceTest {
 
-    private final FilmStorage filmStorage = new InMemoryFilmStorage();
-    private final UserStorage userStorage = new InMemoryUserStorage();
-    private final UserService userService = new UserService(userStorage);
-    private final FilmService filmService = new FilmService(filmStorage, userService);
+    private FilmStorage filmStorage;
+    private UserStorage userStorage;
+    private UserService userService;
+    private FilmService filmService;
+
+    @BeforeEach
+    void setup() {
+        filmStorage = new InMemoryFilmStorage();
+        userStorage = new InMemoryUserStorage();
+        userService = new UserService(userStorage);
+        filmService = new FilmService(filmStorage, userService);
+    }
 
     private Film newFilm(int id, String name) {
         Film f = new Film();
@@ -27,7 +36,7 @@ class FilmServiceTest {
         f.setDescription("desc");
         f.setReleaseDate(LocalDate.of(2000, 1, 1));
         f.setDuration(100);
-        filmStorage.create(f);
+        filmService.create(f);
         return f;
     }
 
@@ -38,7 +47,7 @@ class FilmServiceTest {
         u.setLogin(login);
         u.setName(login);
         u.setBirthday(LocalDate.of(1990, 1, 1));
-        userStorage.create(u);
+        userService.create(u);
         return u;
     }
 

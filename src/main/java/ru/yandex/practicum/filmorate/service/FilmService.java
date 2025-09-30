@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +24,18 @@ public class FilmService {
     public FilmService(FilmStorage films, UserService users) {
         this.films = films;
         this.users = users;
+    }
+
+    public Film create(Film film) {
+        return films.create(film);
+    }
+
+    public Film update(Film film) {
+        return films.update(film);
+    }
+
+    public Collection<Film> getAll() {
+        return films.findAll();
     }
 
     public Film getRequired(int id) {
