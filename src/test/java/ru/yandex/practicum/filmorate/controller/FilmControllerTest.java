@@ -3,50 +3,59 @@ package ru.yandex.practicum.filmorate.controller;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FilmControllerTest {
-    @Test
-    void shouldRejectEmptyName() {
-        FilmController c = new FilmController();
+
+    private final FilmStorage filmStorage = new InMemoryFilmStorage();
+    private final UserStorage userStorage = new InMemoryUserStorage();
+    private final UserService userService = new UserService(userStorage);
+    private final FilmService filmService = new FilmService(filmStorage, userService);
+    private final FilmController controller = new FilmController(filmStorage, filmService);
+
+    private Film base() {
         Film f = new Film();
-        f.setName(" ");
+        f.setName("Name");
+        f.setDescription("desc");
+        f.setReleaseDate(LocalDate.of(2000, 1, 1));
         f.setDuration(100);
-        f.setReleaseDate(LocalDate.of(2000, 1, 1));
-        assertThrows(ValidationException.class, () -> c.addFilm(f));
+        return f;
     }
 
     @Test
-    void shouldRejectTooLongDescription() {
-        FilmController c = new FilmController();
-        Film f = new Film();
-        f.setName("Ok");
-        f.setDescription("x".repeat(201));
-        f.setDuration(90);
-        f.setReleaseDate(LocalDate.of(2000, 1, 1));
-        assertThrows(ValidationException.class, () -> c.addFilm(f));
+    void emptyName_shouldFail() {
+        Film f = base();
+        f.setName("");
+        assertThrows(ValidationException.class, () -> controller.addFilm(f));
     }
 
     @Test
-    void shouldRejectEarlyReleaseDate() {
-        FilmController c = new FilmController();
-        Film f = new Film();
-        f.setName("Ok");
-        f.setDuration(90);
-        f.setReleaseDate(LocalDate.of(1895, 12, 27)); // раньше порога
-        assertThrows(ValidationException.class, () -> c.addFilm(f));
+    void longDescription_shouldFail() {
+        Film f = base();
+        f.setDescription("a".repeat(201));
+        assertThrows(ValidationException.class, () -> controller.addFilm(f));
     }
 
     @Test
-    void shouldRejectNonPositiveDuration() {
-        FilmController c = new FilmController();
-        Film f = new Film();
-        f.setName("Ok");
+    void tooEarlyRelease_shouldFail() {
+        Film f = base();
+        f.setReleaseDate(LocalDate.of(1895, 12, 27));
+        assertThrows(ValidationException.class, () -> controller.addFilm(f));
+    }
+
+    @Test
+    void nonPositiveDuration_shouldFail() {
+        Film f = base();
         f.setDuration(0);
-        f.setReleaseDate(LocalDate.of(2000, 1, 1));
-        assertThrows(ValidationException.class, () -> c.addFilm(f));
+        assertThrows(ValidationException.class, () -> controller.addFilm(f));
     }
 }
