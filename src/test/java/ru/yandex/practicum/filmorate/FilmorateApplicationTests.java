@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
 @AutoConfigureTestDatabase
-@Import(UserDbStorage.class) // подключаем наш DAO
+@Import(UserDbStorage.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class FilmorateApplicationTests {
 
