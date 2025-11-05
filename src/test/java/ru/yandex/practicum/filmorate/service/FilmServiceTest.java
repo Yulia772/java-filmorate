@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
-@Transactional // каждый тест откатывается — БД «чистая»
+@Transactional
 class FilmServiceTest {
 
     @Autowired
@@ -80,7 +80,7 @@ class FilmServiceTest {
         User u = newUser("c");
 
         filmService.addLike(f.getId(), u.getId());
-        filmService.addLike(f.getId(), u.getId()); // повторный лайк игнорируется MERGE’ом
+        filmService.addLike(f.getId(), u.getId()); // повторный лайк игнорируется
 
         List<Film> top = filmService.getPopular(10);
         assertEquals(1, top.size());

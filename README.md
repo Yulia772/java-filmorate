@@ -3,7 +3,7 @@
 Template repository for Filmorate project.
 ## Схема базы данных
 
-![ERD](docs/filmorate-erd.png)
+![ERD](docs/filmorate_db_schema.png)
 
 ### Основные таблицы
 

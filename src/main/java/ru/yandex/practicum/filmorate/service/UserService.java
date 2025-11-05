@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,10 +29,14 @@ public class UserService {
     }
 
     public User create(User user) {
+        validate(user);
+        normalize(user);
         return users.create(user);
     }
 
     public User update(User user) {
+        validate(user);
+        normalize(user);
         getRequired(user.getId());
         return users.update(user);
     }
@@ -74,5 +80,27 @@ public class UserService {
 
     public boolean isFriendshipConfirmed(int a, int b) {
         return userDb.friendshipConfirmed(a, b);
+    }
+
+    private void validate(User user) {
+        String email = user.getEmail();
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            throw new ValidationException("Электронная почта не может быть пустой и должна содержать @");
+        }
+        String login = user.getLogin();
+        if (login == null || login.isBlank() || login.contains(" ")) {
+            throw new ValidationException("Логин не может быть пустым или содержать пробелы");
+        }
+        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
+            throw new ValidationException("День рождения не может быть в будущем");
+        }
+        log.trace("User is valid: {}", user.getLogin());
+    }
+
+    private void normalize(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.debug("User name was empty - set to login: {}", user.getLogin());
+        }
     }
 }

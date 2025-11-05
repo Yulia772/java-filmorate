@@ -30,10 +30,9 @@ class FilmControllerTest {
         f.setDuration(100);
 
         Mpa m = new Mpa();
-        m.setId(1); // есть в data.sql (G)
+        m.setId(1);
         f.setMpa(m);
 
-        // жанры можно не задавать, но добавим для проверки
         Genre g1 = new Genre();
         g1.setId(1);
         Genre g2 = new Genre();
