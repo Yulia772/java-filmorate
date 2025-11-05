@@ -53,7 +53,6 @@ class FilmServiceTest {
         g.setId(1);
         g.setName("Комедия");
         f.setGenres(new LinkedHashSet<>(List.of(g)));
-        
         return filmService.create(f);
     }
 
