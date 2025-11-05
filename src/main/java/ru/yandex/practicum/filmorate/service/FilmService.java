@@ -54,7 +54,7 @@ public class FilmService {
         filmDb.addLike(filmId, userId);
         log.info("User {} liked film {}", userId, filmId);
     }
-
+    
     public void removeLike(int filmId, int userId) {
         getRequired(filmId);
         users.getRequired(userId);
