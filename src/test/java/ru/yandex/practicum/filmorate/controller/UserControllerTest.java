@@ -1,30 +1,23 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
 class UserControllerTest {
 
-    private UserStorage userStorage;
-    private UserService userService;
+    @Autowired
     private UserController controller;
-
-    @BeforeEach
-    void setup() {
-        userStorage = new InMemoryUserStorage();
-        userService = new UserService(userStorage);
-        controller = new UserController(userService);
-    }
 
     @Test
     void shouldRejectBadEmail() {
@@ -32,7 +25,6 @@ class UserControllerTest {
         u.setLogin("egor");
         u.setEmail("bad-email");
         u.setBirthday(LocalDate.of(2000, 1, 1));
-
         assertThrows(ValidationException.class, () -> controller.createUser(u));
     }
 
@@ -42,7 +34,6 @@ class UserControllerTest {
         u.setLogin("bad login");
         u.setEmail("a@b.c");
         u.setBirthday(LocalDate.of(2000, 1, 1));
-
         assertThrows(ValidationException.class, () -> controller.createUser(u));
     }
 
@@ -52,7 +43,6 @@ class UserControllerTest {
         u.setLogin("egor");
         u.setEmail("a@b.c");
         u.setBirthday(LocalDate.now().plusDays(1));
-
         assertThrows(ValidationException.class, () -> controller.createUser(u));
     }
 
