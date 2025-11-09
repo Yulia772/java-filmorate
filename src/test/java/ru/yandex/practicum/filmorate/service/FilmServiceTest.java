@@ -1,62 +1,67 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
 class FilmServiceTest {
 
-    private FilmStorage filmStorage;
-    private UserStorage userStorage;
-    private UserService userService;
+    @Autowired
     private FilmService filmService;
+    @Autowired
+    private UserService userService;
 
-    @BeforeEach
-    void setup() {
-        filmStorage = new InMemoryFilmStorage();
-        userStorage = new InMemoryUserStorage();
-        userService = new UserService(userStorage);
-        filmService = new FilmService(filmStorage, userService);
+    private static final AtomicInteger SEQ = new AtomicInteger(1);
+
+    private User newUser(String login) {
+        int n = SEQ.getAndIncrement();
+        User u = new User();
+        u.setEmail("u" + n + "@a.ru"); // уникальный email на каждый вызов
+        u.setLogin(login);
+        u.setName(login);
+        u.setBirthday(LocalDate.of(1990, 1, 1));
+        return userService.create(u);
     }
 
-    private Film newFilm(int id, String name) {
+    private Film newFilm(String name) {
         Film f = new Film();
-        f.setId(id);
         f.setName(name);
         f.setDescription("desc");
         f.setReleaseDate(LocalDate.of(2000, 1, 1));
         f.setDuration(100);
-        filmService.create(f);
-        return f;
-    }
-
-    private User newUser(int id, String email, String login) {
-        User u = new User();
-        u.setId(id);
-        u.setEmail(email);
-        u.setLogin(login);
-        u.setName(login);
-        u.setBirthday(LocalDate.of(1990, 1, 1));
-        userService.create(u);
-        return u;
+        Mpa m = new Mpa();
+        m.setId(1);
+        m.setName("G");
+        f.setMpa(m);
+        Genre g = new Genre();
+        g.setId(1);
+        g.setName("Комедия");
+        f.setGenres(new LinkedHashSet<>(List.of(g)));
+        return filmService.create(f);
     }
 
     @Test
     void addLike_andGetPopular_ordersByLikesDesc() {
-        Film f1 = newFilm(1, "A");
-        Film f2 = newFilm(2, "B");
-        User u1 = newUser(1, "a@a.ru", "a");
-        User u2 = newUser(2, "b@b.ru", "b");
+        Film f1 = newFilm("A");
+        Film f2 = newFilm("B");
+        User u1 = newUser("a");
+        User u2 = newUser("b");
 
         filmService.addLike(f1.getId(), u1.getId());
         filmService.addLike(f1.getId(), u2.getId());
@@ -71,11 +76,11 @@ class FilmServiceTest {
 
     @Test
     void likeTwice_doesNotDuplicate() {
-        Film f = newFilm(1, "A");
-        User u = newUser(1, "a@a.ru", "a");
+        Film f = newFilm("C");
+        User u = newUser("c");
 
         filmService.addLike(f.getId(), u.getId());
-        filmService.addLike(f.getId(), u.getId()); // повторно
+        filmService.addLike(f.getId(), u.getId()); // повторный лайк игнорируется
 
         List<Film> top = filmService.getPopular(10);
         assertEquals(1, top.size());
@@ -84,8 +89,8 @@ class FilmServiceTest {
 
     @Test
     void removeLike_decreasesCounter() {
-        Film f = newFilm(1, "A");
-        User u = newUser(1, "a@a.ru", "a");
+        Film f = newFilm("D");
+        User u = newUser("d");
 
         filmService.addLike(f.getId(), u.getId());
         filmService.removeLike(f.getId(), u.getId());
@@ -96,8 +101,8 @@ class FilmServiceTest {
     }
 
     @Test
-    void getPopular_defaultCountIs10() {
-        for (int i = 1; i <= 12; i++) newFilm(i, "F" + i);
+    void getPopular_defaultCounts10() {
+        for (int i = 0; i < 12; i++) newFilm("F" + i);
         List<Film> top = filmService.getPopular(10);
         assertEquals(10, top.size());
     }

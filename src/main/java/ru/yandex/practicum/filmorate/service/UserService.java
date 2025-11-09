@@ -3,32 +3,41 @@ package ru.yandex.practicum.filmorate.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserStorage users;
+    private final UserDbStorage userDb;
 
     @Autowired
-    public UserService(UserStorage users) {
+    public UserService(@Qualifier("dbUserStorage") UserStorage users, UserDbStorage userDb) {
         this.users = users;
+        this.userDb = userDb;
     }
 
     public User create(User user) {
+        validate(user);
+        normalize(user);
         return users.create(user);
     }
 
     public User update(User user) {
+        validate(user);
+        normalize(user);
+        getRequired(user.getId());
         return users.update(user);
     }
 
@@ -45,32 +54,53 @@ public class UserService {
     }
 
     public void addFriend(int userId, int friendId) {
-        User u = getRequired(userId);
-        User f = getRequired(friendId);
-        u.getFriends().add(friendId);
-        f.getFriends().add(userId);
-        log.info("Users {} and {} are now friends", userId, friendId);
+        getRequired(userId);
+        getRequired(friendId);
+        userDb.addFriend(userId, friendId);
+        log.info("Users {} sent friend request to {}", userId, friendId);
     }
 
     public void removeFriend(int userId, int friendId) {
-        User u = getRequired(userId);
-        User f = getRequired(friendId);
-        u.getFriends().remove(friendId);
-        f.getFriends().remove(userId);
+        getRequired(userId);
+        getRequired(friendId);
+        userDb.removeFriend(userId, friendId);
         log.info("Users {} and {} are no longer friends", userId, friendId);
     }
 
     public List<User> getFriends(int userId) {
-        return getRequired(userId).getFriends().stream()
-                .map(this::getRequired)
-                .collect(Collectors.toList());
+        getRequired(userId);
+        return userDb.getFriends(userId);
     }
 
     public List<User> getCommonFriends(int userId, int otherId) {
-        Set<Integer> a = getRequired(userId).getFriends();
-        Set<Integer> b = getRequired(otherId).getFriends();
-        return a.stream().filter(b::contains)
-                .map(this::getRequired)
-                .collect(Collectors.toList());
+        getRequired(userId);
+        getRequired(otherId);
+        return userDb.getCommonFriends(userId, otherId);
+    }
+
+    public boolean isFriendshipConfirmed(int a, int b) {
+        return userDb.friendshipConfirmed(a, b);
+    }
+
+    private void validate(User user) {
+        String email = user.getEmail();
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            throw new ValidationException("Электронная почта не может быть пустой и должна содержать @");
+        }
+        String login = user.getLogin();
+        if (login == null || login.isBlank() || login.contains(" ")) {
+            throw new ValidationException("Логин не может быть пустым или содержать пробелы");
+        }
+        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
+            throw new ValidationException("День рождения не может быть в будущем");
+        }
+        log.trace("User is valid: {}", user.getLogin());
+    }
+
+    private void normalize(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.debug("User name was empty - set to login: {}", user.getLogin());
+        }
     }
 }
